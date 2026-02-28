@@ -64,9 +64,9 @@ export function Sidebar() {
       <aside
         className={cn(
           'fixed top-0 left-0 h-full bg-bg2 border-r border-border z-50 flex flex-col transition-all duration-300',
-          sidebarCollapsed ? 'w-16' : 'w-[260px]',
+          sidebarCollapsed ? 'w-16' : 'w-65',
           // Mobile: off-canvas
-          'max-md:-translate-x-full max-md:w-[260px]',
+          'max-md:-translate-x-full max-md:w-65',
           sidebarMobileOpen && 'max-md:translate-x-0'
         )}
       >
@@ -74,14 +74,14 @@ export function Sidebar() {
         <div className="flex items-center justify-between h-16 px-4 border-b border-border">
           {!sidebarCollapsed && (
             <Link href="/dashboard" className="flex items-center gap-2.5" onClick={closeMobileSidebar}>
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-cyan flex items-center justify-center text-white font-bold text-sm">
+              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-accent to-cyan flex items-center justify-center text-white font-bold text-sm">
                 G
               </div>
               <span className="font-heading text-lg font-bold">GSTPro</span>
             </Link>
           )}
           {sidebarCollapsed && (
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-cyan flex items-center justify-center text-white font-bold text-sm mx-auto">
+            <div className="w-8 h-8 rounded-lg bg-linear-to-br from-accent to-cyan flex items-center justify-center text-white font-bold text-sm mx-auto">
               G
             </div>
           )}
@@ -119,7 +119,7 @@ export function Sidebar() {
                       className={cn(
                         'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                         isActive
-                          ? 'bg-gradient-to-r from-accent/20 to-cyan/10 text-accent2'
+                          ? 'bg-linear-to-r from-accent/20 to-cyan/10 text-accent2'
                           : 'text-text2 hover:text-text hover:bg-surface'
                       )}
                     >
@@ -137,7 +137,7 @@ export function Sidebar() {
         <div className="p-3 border-t border-border">
           {!sidebarCollapsed ? (
             <div className="flex items-center gap-3 p-2">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-accent to-cyan flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              <div className="w-9 h-9 rounded-lg bg-linear-to-br from-accent to-cyan flex items-center justify-center text-white text-xs font-bold shrink-0">
                 {user?.name?.charAt(0) ?? 'U'}
               </div>
               <div className="flex-1 min-w-0">

@@ -27,7 +27,7 @@ export function Topbar() {
     <header
       className={cn(
         'sticky top-0 z-30 bg-bg2 border-b border-border px-6 py-3.5 flex items-center gap-4 transition-all duration-300',
-        sidebarCollapsed ? 'md:ml-16' : 'md:ml-[260px]'
+        sidebarCollapsed ? 'md:ml-16' : 'md:ml-65'
       )}
     >
       <button
@@ -42,7 +42,7 @@ export function Topbar() {
       <div className="flex-1" />
 
       {/* Search (desktop) */}
-      <div className="hidden lg:flex items-center gap-2 bg-bg3 rounded-lg px-3 py-2 border border-border min-w-[240px]">
+      <div className="hidden lg:flex items-center gap-2 bg-bg3 rounded-lg px-3 py-2 border border-border min-w-60">
         <Search size={16} className="text-text3" />
         <input
           type="text"

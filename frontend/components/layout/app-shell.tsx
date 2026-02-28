@@ -35,7 +35,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main
         className={cn(
           'transition-all duration-300 p-6',
-          sidebarCollapsed ? 'md:ml-16' : 'md:ml-[260px]'
+          sidebarCollapsed ? 'md:ml-16' : 'md:ml-65'
         )}
       >
         <div className="animate-fade-in">{children}</div>
