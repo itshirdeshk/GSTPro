@@ -1,0 +1,340 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  ADMIN
+  STAFF
+  ACCOUNTANT
+}
+
+enum PlanType {
+  FREE
+  BASIC
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  CANCELLED
+}
+
+enum PaymentMode {
+  CASH
+  UPI
+  NEFT
+  RTGS
+  CHEQUE
+  CARD
+  CREDIT_CARD
+  BANK_TRANSFER
+}
+
+enum ExpenseCategory {
+  RENT
+  SALARY
+  UTILITIES
+  TRAVEL
+  OFFICE_SUPPLIES
+  MARKETING
+  PROFESSIONAL_FEES
+  INSURANCE
+  MAINTENANCE
+  OTHER
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+model Tenant {
+  id                  String    @id @default(uuid()) @db.Uuid
+  businessName        String    @map("business_name")
+  legalName           String?   @map("legal_name")
+  businessType        String?   @map("business_type")
+  gstin               String?
+  stateCode           String?   @map("state_code") @db.VarChar(2)
+  address             String?
+  city                String?
+  state               String?
+  pincode             String?   @db.VarChar(6)
+  phone               String?
+  email               String?
+  website             String?
+  pan                 String?   @db.VarChar(10)
+  bankDetails         Json?     @map("bank_details")
+  invoicePrefix       String    @default("INV") @map("invoice_prefix") @db.VarChar(10)
+  lastInvoiceNumber   Int       @default(0) @map("last_invoice_number")
+  isComposition       Boolean   @default(false) @map("is_composition")
+  logoUrl             String?   @map("logo_url")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  users               User[]
+  subscriptions       Subscription[]
+  customers           Customer[]
+  products            Product[]
+  invoices            Invoice[]
+  payments            Payment[]
+  expenses            Expense[]
+  auditLogs           AuditLog[]
+
+  @@map("tenants")
+}
+
+model User {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  email         String
+  password      String
+  name          String
+  phone         String?
+  role          Role      @default(ADMIN)
+  isActive      Boolean   @default(true) @map("is_active")
+  lastLoginAt   DateTime? @map("last_login_at")
+  resetToken    String?   @map("reset_token")
+  resetTokenExp DateTime? @map("reset_token_exp")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  expenses      Expense[]
+  auditLogs     AuditLog[]
+
+  @@unique([email, tenantId])
+  @@index([tenantId])
+  @@index([email])
+  @@map("users")
+}
+
+model Subscription {
+  id                    String              @id @default(uuid()) @db.Uuid
+  tenantId              String              @map("tenant_id") @db.Uuid
+  plan                  PlanType            @default(FREE)
+  status                SubscriptionStatus  @default(ACTIVE)
+  startDate             DateTime            @default(now()) @map("start_date")
+  endDate               DateTime            @map("end_date")
+  maxInvoicesPerMonth   Int                 @default(50) @map("max_invoices_per_month")
+  maxCustomers          Int                 @default(100) @map("max_customers")
+  maxUsers              Int                 @default(1) @map("max_users")
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  tenant                Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@map("subscriptions")
+}
+
+model Customer {
+  id                String    @id @default(uuid()) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  name              String
+  gstin             String?
+  phone             String?
+  email             String?
+  address           String?
+  city              String?
+  state             String?
+  stateCode         String?   @map("state_code") @db.VarChar(2)
+  pincode           String?   @db.VarChar(6)
+  creditLimit       Decimal   @default(0) @map("credit_limit") @db.Decimal(12, 2)
+  outstandingAmount Decimal   @default(0) @map("outstanding_amount") @db.Decimal(12, 2)
+  isActive          Boolean   @default(true) @map("is_active")
+  deletedAt         DateTime? @map("deleted_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoices          Invoice[]
+
+  @@index([tenantId])
+  @@index([tenantId, name])
+  @@index([tenantId, gstin])
+  @@map("customers")
+}
+
+model Product {
+  id                  String    @id @default(uuid()) @db.Uuid
+  tenantId            String    @map("tenant_id") @db.Uuid
+  name                String
+  type                String    @default("GOODS") @db.VarChar(20)
+  hsnCode             String?   @map("hsn_code") @db.VarChar(8)
+  sacCode             String?   @map("sac_code") @db.VarChar(8)
+  gstRate             Decimal   @map("gst_rate") @db.Decimal(5, 2)
+  sellingPrice        Decimal   @map("selling_price") @db.Decimal(12, 2)
+  costPrice           Decimal?  @map("cost_price") @db.Decimal(12, 2)
+  unit                String    @default("Nos") @db.VarChar(20)
+  stock               Int       @default(0)
+  lowStockThreshold   Int       @default(10) @map("low_stock_threshold")
+  description         String?
+  isActive            Boolean   @default(true) @map("is_active")
+  deletedAt           DateTime? @map("deleted_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  tenant              Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoiceItems        InvoiceItem[]
+
+  @@index([tenantId])
+  @@index([tenantId, name])
+  @@index([tenantId, hsnCode])
+  @@map("products")
+}
+
+model Invoice {
+  id                String        @id @default(uuid()) @db.Uuid
+  tenantId          String        @map("tenant_id") @db.Uuid
+  customerId        String        @map("customer_id") @db.Uuid
+  invoiceNumber     String        @map("invoice_number")
+  invoiceDate       DateTime      @map("invoice_date") @db.Date
+  dueDate           DateTime      @map("due_date") @db.Date
+  status            InvoiceStatus @default(DRAFT)
+  subtotal          Decimal       @db.Decimal(14, 2)
+  cgst              Decimal       @default(0) @db.Decimal(14, 2)
+  sgst              Decimal       @default(0) @db.Decimal(14, 2)
+  igst              Decimal       @default(0) @db.Decimal(14, 2)
+  discount          Decimal       @default(0) @db.Decimal(14, 2)
+  totalAmount       Decimal       @map("total_amount") @db.Decimal(14, 2)
+  amountPaid        Decimal       @default(0) @map("amount_paid") @db.Decimal(14, 2)
+  isInterState      Boolean       @default(false) @map("is_inter_state")
+  isReverseCharge   Boolean       @default(false) @map("is_reverse_charge")
+  terms             String?
+  notes             String?
+  templateId        Int           @default(1) @map("template_id")
+  pdfUrl            String?       @map("pdf_url")
+  cancelledAt       DateTime?     @map("cancelled_at")
+  cancelReason      String?       @map("cancel_reason")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  tenant            Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer          Customer      @relation(fields: [customerId], references: [id])
+  items             InvoiceItem[]
+  payments          Payment[]
+
+  @@unique([tenantId, invoiceNumber])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, customerId])
+  @@index([tenantId, invoiceDate])
+  @@index([tenantId, createdAt])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id            String    @id @default(uuid()) @db.Uuid
+  invoiceId     String    @map("invoice_id") @db.Uuid
+  productId     String?   @map("product_id") @db.Uuid
+  description   String
+  hsnCode       String?   @map("hsn_code") @db.VarChar(8)
+  quantity      Decimal   @db.Decimal(10, 2)
+  unitPrice     Decimal   @map("unit_price") @db.Decimal(12, 2)
+  gstRate       Decimal   @map("gst_rate") @db.Decimal(5, 2)
+  taxableAmount Decimal   @map("taxable_amount") @db.Decimal(14, 2)
+  cgst          Decimal   @default(0) @db.Decimal(14, 2)
+  sgst          Decimal   @default(0) @db.Decimal(14, 2)
+  igst          Decimal   @default(0) @db.Decimal(14, 2)
+  totalAmount   Decimal   @map("total_amount") @db.Decimal(14, 2)
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  invoice       Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product       Product?  @relation(fields: [productId], references: [id])
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model Payment {
+  id              String      @id @default(uuid()) @db.Uuid
+  tenantId        String      @map("tenant_id") @db.Uuid
+  invoiceId       String      @map("invoice_id") @db.Uuid
+  amount          Decimal     @db.Decimal(14, 2)
+  paymentDate     DateTime    @map("payment_date") @db.Date
+  paymentMode     PaymentMode @map("payment_mode")
+  referenceNumber String?     @map("reference_number")
+  notes           String?
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  tenant          Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoice         Invoice     @relation(fields: [invoiceId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, invoiceId])
+  @@index([tenantId, paymentDate])
+  @@map("payments")
+}
+
+model Expense {
+  id              String           @id @default(uuid()) @db.Uuid
+  tenantId        String           @map("tenant_id") @db.Uuid
+  userId          String           @map("user_id") @db.Uuid
+  description     String
+  amount          Decimal          @db.Decimal(14, 2)
+  gstAmount       Decimal          @default(0) @map("gst_amount") @db.Decimal(14, 2)
+  category        ExpenseCategory  @default(OTHER)
+  expenseDate     DateTime         @map("expense_date") @db.Date
+  paymentMode     PaymentMode      @default(CASH) @map("payment_mode")
+  referenceNumber String?          @map("reference_number")
+  vendor          String?
+  notes           String?
+  billUrl         String?          @map("bill_url")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, expenseDate])
+  @@index([tenantId, category])
+  @@map("expenses")
+}
+
+model AuditLog {
+  id        String    @id @default(uuid()) @db.Uuid
+  tenantId  String    @map("tenant_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  action    String
+  entity    String
+  entityId  String?   @map("entity_id")
+  meta      Json?
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, entity])
+  @@index([tenantId, createdAt])
+  @@map("audit_logs")
+}
