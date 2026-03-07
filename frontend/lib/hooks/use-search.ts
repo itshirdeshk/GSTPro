@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiGetPaginated } from '@/lib/api';
-import type { Customer, Product } from '@/lib/types';
+import type { Customer, Product, Invoice } from '@/lib/types';
 import type { ComboBoxOption } from '@/components/ui/combobox';
 
 export function useCustomerSearch(search: string = '') {
@@ -110,5 +110,59 @@ export function useProductSearch(search: string = '') {
     hasMore,
     loadMore,
     products: allProducts,
+  };
+}
+
+export function useInvoiceSearch(search: string = '') {
+  const [page, setPage] = useState(1);
+  const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ['invoices', 'search', search, page],
+    queryFn: () =>
+      apiGetPaginated<Invoice>('/invoices', {
+        search,
+        page,
+        limit: 20,
+      }),
+  });
+
+  useEffect(() => {
+    if (data?.data) {
+      setAllInvoices((prev) => {
+        if (page === 1) return data.data;
+        const existing = new Set(prev.map((i) => i.id));
+        const newItems = data.data.filter((i) => !existing.has(i.id));
+        return [...prev, ...newItems];
+      });
+    }
+  }, [data, page]);
+
+  useEffect(() => {
+    // Reset page when search changes - data effect will handle the array update
+    setPage(1);
+  }, [search]);
+
+  const loadMore = () => {
+    const hasMore = data?.pagination ? data.pagination.page < data.pagination.totalPages : false;
+    if (hasMore && !isFetching) {
+      setPage((p) => p + 1);
+    }
+  };
+
+  const options: ComboBoxOption[] = allInvoices.map((invoice) => ({
+    value: invoice.id,
+    label: invoice.invoiceNumber,
+    extra: `${invoice.customer?.name || 'Unknown'} • ₹${invoice.balanceAmount} due`,
+  }));
+
+  const hasMore = data?.pagination ? data.pagination.page < data.pagination.totalPages : false;
+
+  return {
+    options,
+    loading: isLoading || isFetching,
+    hasMore,
+    loadMore,
+    invoices: allInvoices,
   };
 }

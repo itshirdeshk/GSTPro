@@ -10,8 +10,10 @@ import { Card, StatCard } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
 import { StatusBadge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
+import { ComboBox } from '@/components/ui/combobox';
 import { apiGetPaginated, apiPost, apiDelete } from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { useInvoiceSearch } from '@/lib/hooks/use-search';
 import type { Payment } from '@/lib/types';
 import toast from 'react-hot-toast';
 
@@ -101,7 +103,7 @@ export default function PaymentsPage() {
         <StatCard label="Overdue" value={formatCurrency(0)} icon={<AlertCircle size={20} />} color="red" />
       </div>
 
-      <Card className="!p-4">
+      <Card className="p-4!">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
             <Input
@@ -121,7 +123,7 @@ export default function PaymentsPage() {
         </div>
       </Card>
 
-      <Card className="!p-0 overflow-hidden">
+      <Card className="p-0! overflow-hidden">
         <DataTable<Record<string, unknown>>
           columns={columns as any}
           data={(data?.data || []) as any}
@@ -142,6 +144,7 @@ export default function PaymentsPage() {
 }
 
 function PaymentForm({ onSuccess }: { onSuccess: () => void }) {
+  const [invoiceSearch, setInvoiceSearch] = useState('');
   const [form, setForm] = useState({
     invoiceId: '',
     amount: 0,
@@ -151,6 +154,9 @@ function PaymentForm({ onSuccess }: { onSuccess: () => void }) {
     notes: '',
   });
   const [loading, setLoading] = useState(false);
+
+  // Fetch invoices for selection
+  const invoiceOptions = useInvoiceSearch(invoiceSearch);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,7 +177,19 @@ function PaymentForm({ onSuccess }: { onSuccess: () => void }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input id="invoiceId" label="Invoice ID" value={form.invoiceId} onChange={(e) => set('invoiceId', e.target.value)} required />
+        <ComboBox
+          label="Invoice"
+          placeholder="Select invoice"
+          options={invoiceOptions.options}
+          value={form.invoiceId}
+          onChange={(value) => set('invoiceId', value)}
+          onSearch={setInvoiceSearch}
+          onLoadMore={invoiceOptions.loadMore}
+          loading={invoiceOptions.loading}
+          hasMore={invoiceOptions.hasMore}
+          searchPlaceholder="Search invoices..."
+          required
+        />
         <Input id="amount" label="Amount (₹)" type="number" value={form.amount} onChange={(e) => set('amount', +e.target.value)} required />
         <Input id="paymentDate" label="Payment Date" type="date" value={form.paymentDate} onChange={(e) => set('paymentDate', e.target.value)} required />
         <Select

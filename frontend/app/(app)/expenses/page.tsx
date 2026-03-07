@@ -153,7 +153,7 @@ export default function ExpensesPage() {
         </Button>
       </div>
 
-      <Card className="!p-4">
+      <Card className="p-4!">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
             <Input

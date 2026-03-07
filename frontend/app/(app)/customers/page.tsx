@@ -63,7 +63,7 @@ export default function CustomersPage() {
       header: 'Customer',
       render: (c: Customer) => (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-cyan flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-accent to-cyan flex items-center justify-center text-white text-xs font-bold shrink-0">
             {getInitials(c.name)}
           </div>
           <div>
@@ -150,7 +150,7 @@ export default function CustomersPage() {
         </Button>
       </div>
 
-      <Card className="!p-4">
+      <Card className="p-4!">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
             <Input
@@ -170,7 +170,7 @@ export default function CustomersPage() {
         </div>
       </Card>
 
-      <Card className="!p-0 overflow-hidden">
+      <Card className="p-0! overflow-hidden">
         <DataTable<Record<string, unknown>>
           columns={columns as any}
           data={(data?.data || []) as any}

@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { StatCard } from '@/components/ui/card';
 import { Card } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui/badge';
-import { Spinner } from '@/components/ui/spinner';
 import { apiGet } from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { DashboardStats } from '@/lib/types';
@@ -97,32 +96,32 @@ export default function DashboardPage() {
   const isLoading = salesLoading || gstLoading || invoicesLoading;
 
   // Calculate stats from fetched data
-  const totalRevenue = salesData?.totals?._sum?.totalAmount || mockStats.totalRevenue;
+  const totalRevenue = salesData?.summary?.totalRevenue || mockStats.totalRevenue;
   const gstCollected =
-    (gstData?.totals?.cgst || 0) + (gstData?.totals?.sgst || 0) + (gstData?.totals?.igst || 0) ||
+    (gstData?.summary?.cgst || 0) + 
+    (gstData?.summary?.sgst || 0) + 
+    (gstData?.summary?.igst || 0) ||
     mockStats.gstCollected;
-  const pendingPayments =
-    (salesData?.totals?._sum?.totalAmount || 0) - (salesData?.totals?._sum?.amountPaid || 0) ||
-    mockStats.pendingPayments;
-  const totalExpenses = expensesData?.totalAmount || mockStats.totalExpenses;
+  const pendingPayments = salesData?.summary?.totalOutstanding || mockStats.pendingPayments;
+  const totalExpenses = expensesData?.totalExpenses || mockStats.totalExpenses;
 
-  // Process monthly trend data
+  // Process monthly trend data - format: "2026-02" to "Feb"
   const chartData =
     salesData?.monthlyTrend?.map((m: any) => ({
-      month: new Date(m.year, m.month - 1).toLocaleDateString('en', { month: 'short' }),
-      revenue: m.revenue || 0,
+      month: new Date(m.month + '-01').toLocaleDateString('en', { month: 'short' }),
+      revenue: m.total || 0,
     })) || mockChartData;
 
   // GST breakdown
-  const gstBreakdownData = gstData
+  const gstBreakdownData = gstData?.summary
     ? [
-        { name: 'CGST', value: gstData.totals?.cgst || 0, color: '#6c63ff' },
-        { name: 'SGST', value: gstData.totals?.sgst || 0, color: '#8b84ff' },
-        { name: 'IGST', value: gstData.totals?.igst || 0, color: '#06b6d4' },
+        { name: 'CGST', value: gstData.summary.cgst || 0, color: '#6c63ff' },
+        { name: 'SGST', value: gstData.summary.sgst || 0, color: '#8b84ff' },
+        { name: 'IGST', value: gstData.summary.igst || 0, color: '#06b6d4' },
       ]
     : gstBreakdown;
 
-  const recentInvoices = invoicesData?.data || [];
+  const recentInvoices = invoicesData || [];
 
   const s = {
     totalRevenue,
@@ -286,7 +285,7 @@ export default function DashboardPage() {
                     <td className="px-4 py-3 text-[13px] font-medium">{inv.invoiceNumber}</td>
                     <td className="px-4 py-3 text-[13px] text-text2">{inv.customer?.name}</td>
                     <td className="px-4 py-3 text-[13px] text-text3">{formatDate(inv.invoiceDate)}</td>
-                    <td className="px-4 py-3 text-[13px] text-right font-medium">{formatCurrency(inv.totalAmount)}</td>
+                    <td className="px-4 py-3 text-[13px] text-right font-medium">{formatCurrency(Number(inv.totalAmount))}</td>
                     <td className="px-4 py-3 text-center"><StatusBadge status={inv.status} /></td>
                   </tr>
                 ))}

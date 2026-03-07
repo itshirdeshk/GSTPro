@@ -75,7 +75,7 @@ export default function InvoicesPage() {
       className: 'text-right',
       render: (inv: Invoice) => (
         <span className="text-text3">
-          {formatCurrency(inv.totalCgst + inv.totalSgst + inv.totalIgst)}
+          {formatCurrency(inv.cgst + inv.sgst + inv.igst, inv)}
         </span>
       ),
     },

@@ -116,9 +116,9 @@ export interface Invoice {
   discount?: number; // Invoice-level discount
   totalDiscount: number;
   totalTaxableAmount: number;
-  totalCgst: number;
-  totalSgst: number;
-  totalIgst: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
   totalAmount: number;
   paidAmount: number;
   balanceAmount: number;
