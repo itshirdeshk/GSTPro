@@ -177,18 +177,100 @@ export interface Expense {
 
 // ──── Reports ────
 export interface SalesReport {
-  totalRevenue: number;
-  totalInvoices: number;
-  averageInvoiceValue: number;
-  monthlySales: { month: string; revenue: number; count: number }[];
+  summary: {
+    totalRevenue: number;
+    totalCollected: number;
+    totalOutstanding: number;
+    subtotal: number;
+    totalCgst: number;
+    totalSgst: number;
+    totalIgst: number;
+    totalDiscount: number;
+    invoiceCount: number;
+  };
+  byStatus: { status: string; total: number; count: number }[];
+  topCustomers: { customerId: string; customerName: string; total: number; invoiceCount: number }[];
+  monthlyTrend: { month: string; total: number; count: number }[];
 }
 
 export interface GSTReport {
-  totalCgst: number;
-  totalSgst: number;
-  totalIgst: number;
-  totalGst: number;
-  gstByRate: { rate: number; taxable: number; tax: number }[];
+  summary: {
+    taxableValue: number;
+    cgst: number;
+    sgst: number;
+    igst: number;
+    totalOutputGst: number;
+    totalInputGst: number;
+    netGstLiability: number;
+    invoiceCount: number;
+  };
+  byGstRate: {
+    gstRate: number;
+    taxableAmount: number;
+    cgst: number;
+    sgst: number;
+    igst: number;
+    total: number;
+    count: number;
+  }[];
+  interVsIntra: { type: string; cgst: number; sgst: number; igst: number; total: number; count: number }[];
+  monthlyTrend: { month: string; cgst: number; sgst: number; igst: number; total: number }[];
+}
+
+export interface ProfitLossReport {
+  income: {
+    revenue: number;
+    totalInvoiceAmount: number;
+    discount: number;
+  };
+  expenses: {
+    total: number;
+    gstOnExpenses: number;
+    count: number;
+    byCategory: { category: string; amount: number; count: number }[];
+  };
+  profitLoss: {
+    netProfit: number;
+    profitMargin: number;
+    isProfit: boolean;
+  };
+}
+
+export interface OutstandingReport {
+  summary: {
+    totalOutstanding: number;
+    totalInvoiced: number;
+    totalPaid: number;
+    invoiceCount: number;
+    overdueCount: number;
+  };
+  ageing: {
+    current: number;
+    '1-30 days': number;
+    '31-60 days': number;
+    '61-90 days': number;
+    '90+ days': number;
+  };
+  byCustomer: {
+    customerId: string;
+    customerName: string;
+    totalInvoiced: number;
+    totalPaid: number;
+    outstanding: number;
+    invoiceCount: number;
+  }[];
+  invoices: {
+    id: string;
+    invoiceNumber: string;
+    invoiceDate: string;
+    dueDate: string;
+    totalAmount: number;
+    amountPaid: number;
+    outstanding: number;
+    status: string;
+    isOverdue: boolean;
+    customer: { id: string; name: string; gstin: string | null };
+  }[];
 }
 
 export interface DashboardStats {
