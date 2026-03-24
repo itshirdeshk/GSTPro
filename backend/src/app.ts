@@ -21,6 +21,7 @@ import reportRoutes from './modules/report/report.routes';
 import healthRoutes from './modules/health/health.routes';
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Security
 app.use(helmet());
