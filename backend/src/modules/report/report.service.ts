@@ -443,6 +443,98 @@ export class ReportService {
       })),
     };
   }
+
+  async quotationReport(
+    tenantId: string,
+    fromDate: string,
+    toDate: string
+  ) {
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+
+    const where: Prisma.QuotationWhereInput = {
+      tenantId,
+      quotationDate: { gte: from, lte: to },
+    };
+
+    const [totals, byStatus, topCustomers, monthlyTrend] = await Promise.all([
+      prisma.quotation.aggregate({
+        where,
+        _sum: {
+          totalAmount: true,
+        },
+        _count: true,
+      }),
+      prisma.quotation.groupBy({
+        by: ['status'],
+        where,
+        _sum: { totalAmount: true },
+        _count: true,
+      }),
+      prisma.quotation.groupBy({
+        by: ['customerId'],
+        where,
+        _sum: { totalAmount: true },
+        _count: true,
+        orderBy: { _sum: { totalAmount: 'desc' } },
+        take: 10,
+      }),
+      prisma.$queryRaw<{ month: string; total: number; count: bigint }[]>`
+        SELECT 
+          TO_CHAR(quotation_date, 'YYYY-MM') as month,
+          SUM(total_amount)::float as total,
+          COUNT(*)::bigint as count
+        FROM quotations
+        WHERE tenant_id = ${tenantId}::uuid
+          AND quotation_date >= ${from}
+          AND quotation_date <= ${to}
+        GROUP BY TO_CHAR(quotation_date, 'YYYY-MM')
+        ORDER BY month ASC
+      `,
+    ]);
+
+    const customerIds = topCustomers.map((item) => item.customerId);
+    const customers = customerIds.length
+      ? await prisma.customer.findMany({
+          where: { id: { in: customerIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const customerMap = new Map(customers.map((customer) => [customer.id, customer.name]));
+
+    const sentCount = byStatus.find((item) => item.status === 'SENT')?._count || 0;
+    const acceptedCount = byStatus.find((item) => item.status === 'ACCEPTED')?._count || 0;
+    const convertedCount = byStatus.find((item) => item.status === 'CONVERTED')?._count || 0;
+    const allCount = totals._count || 0;
+
+    return {
+      summary: {
+        quotationCount: allCount,
+        totalValue: Number(totals._sum.totalAmount || 0),
+        sentCount,
+        acceptedCount,
+        convertedCount,
+        acceptanceRate: sentCount > 0 ? roundTo2((acceptedCount / sentCount) * 100) : 0,
+        conversionRate: allCount > 0 ? roundTo2((convertedCount / allCount) * 100) : 0,
+      },
+      byStatus: byStatus.map((item) => ({
+        status: item.status,
+        count: item._count,
+        total: Number(item._sum.totalAmount || 0),
+      })),
+      topCustomers: topCustomers.map((item) => ({
+        customerId: item.customerId,
+        customerName: customerMap.get(item.customerId) || 'Unknown',
+        quotationCount: item._count,
+        total: Number(item._sum.totalAmount || 0),
+      })),
+      monthlyTrend: monthlyTrend.map((item) => ({
+        month: item.month,
+        total: Number(item.total || 0),
+        count: Number(item.count),
+      })),
+    };
+  }
 }
 
 export const reportService = new ReportService();

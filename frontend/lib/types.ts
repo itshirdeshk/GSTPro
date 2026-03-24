@@ -132,6 +132,41 @@ export interface Invoice {
   createdAt: string;
 }
 
+// ──── Quotation ────
+export type QuotationStatus = 'DRAFT' | 'SENT' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED' | 'CONVERTED';
+
+export interface QuotationItem {
+  productId?: string;
+  description: string;
+  hsnCode?: string;
+  quantity: number;
+  unitPrice: number;
+  gstRate: number;
+}
+
+export interface Quotation {
+  id: string;
+  quotationNumber: string;
+  customerId: string;
+  customerName?: string;
+  customer?: Customer;
+  quotationDate: string;
+  validUntil: string;
+  status: QuotationStatus;
+  items: QuotationItem[];
+  cgst?: number;
+  sgst?: number;
+  igst?: number;
+  discount: number;
+  subtotal: number;
+  taxAmount: number;
+  totalAmount: number;
+  convertedInvoiceId?: string | null;
+  terms?: string;
+  notes?: string;
+  createdAt: string;
+}
+
 // ──── Payment ────
 export type PaymentMode = 'CASH' | 'UPI' | 'BANK_TRANSFER' | 'CHEQUE' | 'CARD' | 'OTHER';
 
@@ -270,6 +305,34 @@ export interface OutstandingReport {
     status: string;
     isOverdue: boolean;
     customer: { id: string; name: string; gstin: string | null };
+  }[];
+}
+
+export interface QuotationReport {
+  summary: {
+    quotationCount: number;
+    totalValue: number;
+    sentCount: number;
+    acceptedCount: number;
+    convertedCount: number;
+    acceptanceRate: number;
+    conversionRate: number;
+  };
+  byStatus: {
+    status: string;
+    count: number;
+    total: number;
+  }[];
+  topCustomers: {
+    customerId: string;
+    customerName: string;
+    quotationCount: number;
+    total: number;
+  }[];
+  monthlyTrend: {
+    month: string;
+    total: number;
+    count: number;
   }[];
 }
 

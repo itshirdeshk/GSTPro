@@ -1,5 +1,5 @@
 # ── Stage 1: Build ──────────────────────────────────────────────────────────
-FROM node:22-alpine AS builder
+FROM node:20-alpine AS builder
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -21,14 +21,13 @@ COPY src ./src
 RUN pnpm exec prisma generate
 
 # Compile TypeScript
-RUN pnpm run build
-
-# Prune to production-only deps
-RUN pnpm prune --prod
+RUN printf '{\n  "extends": "./tsconfig.json",\n  "compilerOptions": {\n    "declaration": false,\n    "declarationMap": false\n  }\n}\n' > tsconfig.build.json \
+	&& pnpm exec tsc -p tsconfig.build.json \
+	&& pnpm exec tsc-alias -p tsconfig.build.json
 
 
 # ── Stage 2: Production image ────────────────────────────────────────────────
-FROM node:22-alpine AS runner
+FROM node:20-alpine AS runner
 
 RUN apk add --no-cache dumb-init
 
@@ -38,6 +37,9 @@ WORKDIR /app
 
 # Non-root user for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Ensure runtime log directory is writable by the non-root user
+RUN mkdir -p /app/logs && chown appuser:appgroup /app/logs
 
 # Copy production artifacts
 COPY --from=builder /app/node_modules ./node_modules

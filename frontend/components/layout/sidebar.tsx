@@ -8,6 +8,8 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import {
   LayoutDashboard,
   FileText,
+  ScrollText,
+  Calculator,
   Users,
   Package,
   CreditCard,
@@ -25,6 +27,7 @@ const navSections = [
     items: [
       { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
       { href: '/invoices', icon: FileText, label: 'Invoices' },
+      { href: '/quotations', icon: ScrollText, label: 'Quotations' },
       { href: '/customers', icon: Users, label: 'Customers' },
       { href: '/products', icon: Package, label: 'Products' },
     ],
@@ -34,6 +37,7 @@ const navSections = [
     items: [
       { href: '/payments', icon: CreditCard, label: 'Payments' },
       { href: '/expenses', icon: Receipt, label: 'Expenses' },
+      { href: '/calculator', icon: Calculator, label: 'Calculator' },
       { href: '/reports', icon: BarChart3, label: 'Reports' },
     ],
   },

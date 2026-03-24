@@ -12,6 +12,7 @@ import {
   Receipt,
   Clock,
   TrendingDown,
+  ScrollText,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -93,6 +94,15 @@ export default function DashboardPage() {
       }),
   });
 
+  const { data: quotationData } = useQuery({
+    queryKey: ['dashboard-quotations'],
+    queryFn: () =>
+      apiGet<any>('/reports/quotations', {
+        fromDate: sixMonthsAgo.toISOString().split('T')[0],
+        toDate: now.toISOString().split('T')[0],
+      }),
+  });
+
   const isLoading = salesLoading || gstLoading || invoicesLoading;
 
   // Calculate stats from fetched data
@@ -102,8 +112,9 @@ export default function DashboardPage() {
     (gstData?.summary?.sgst || 0) + 
     (gstData?.summary?.igst || 0) ||
     mockStats.gstCollected;
-  const pendingPayments = salesData?.summary?.totalOutstanding || mockStats.pendingPayments;
+  const pendingPayments = salesData?.summary?.totalOutstanding || 0;
   const totalExpenses = expensesData?.totalExpenses || mockStats.totalExpenses;
+  const quotationCount = quotationData?.summary?.quotationCount || 0;
 
   // Process monthly trend data - format: "2026-02" to "Feb"
   const chartData =
@@ -133,7 +144,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           label="Total Revenue"
           value={formatCurrency(s.totalRevenue)}
@@ -165,6 +176,14 @@ export default function DashboardPage() {
           changeType="up"
           icon={<TrendingDown size={20} />}
           color="red"
+        />
+        <StatCard
+          label="Quotations"
+          value={String(quotationCount)}
+          change={`${quotationData?.summary?.conversionRate || 0}% converted`}
+          changeType="up"
+          icon={<ScrollText size={20} />}
+          color="accent"
         />
       </div>
 

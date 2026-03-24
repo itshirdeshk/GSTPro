@@ -11,6 +11,7 @@ router.use(authenticate, requireTenant);
 router.get('/sales', authorize('ADMIN', 'ACCOUNTANT'), reportController.salesReport);
 router.get('/gst', authorize('ADMIN', 'ACCOUNTANT'), reportController.gstReport);
 router.get('/profit-loss', authorize('ADMIN', 'ACCOUNTANT'), reportController.profitLossReport);
+router.get('/quotations', authorize('ADMIN', 'ACCOUNTANT', 'STAFF'), reportController.quotationReport);
 router.get('/outstanding', authorize('ADMIN', 'ACCOUNTANT', 'STAFF'), reportController.outstandingReport);
 
 export default router;

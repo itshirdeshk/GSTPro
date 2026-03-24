@@ -11,7 +11,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { StatusBadge } from '@/components/ui/badge';
 import { apiGet } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
-import type { SalesReport, GSTReport, ProfitLossReport, OutstandingReport } from '@/lib/types';
+import type { SalesReport, GSTReport, ProfitLossReport, OutstandingReport, QuotationReport } from '@/lib/types';
 import {
   ResponsiveContainer,
   BarChart,
@@ -32,6 +32,7 @@ const reportTabs = [
   { key: 'sales', label: 'Sales Report' },
   { key: 'gst', label: 'GST Report' },
   { key: 'pnl', label: 'Profit & Loss' },
+  { key: 'quotations', label: 'Quotations' },
   { key: 'outstanding', label: 'Outstanding' },
 ];
 
@@ -81,7 +82,115 @@ export default function ReportsPage() {
       {tab === 'sales' && <SalesReportView fromDate={fromDate} toDate={toDate} />}
       {tab === 'gst' && <GSTReportView fromDate={fromDate} toDate={toDate} />}
       {tab === 'pnl' && <PnLReportView fromDate={fromDate} toDate={toDate} />}
+      {tab === 'quotations' && <QuotationReportView fromDate={fromDate} toDate={toDate} />}
       {tab === 'outstanding' && <OutstandingReportView />}
+    </div>
+  );
+}
+
+function QuotationReportView({ fromDate, toDate }: { fromDate: string; toDate: string }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['report-quotations', fromDate, toDate],
+    queryFn: () => apiGet<QuotationReport>('/reports/quotations', { fromDate, toDate }),
+    enabled: !!fromDate && !!toDate,
+  });
+
+  if (isLoading) return <div className="flex justify-center py-16"><Spinner /></div>;
+
+  const { summary, byStatus = [], topCustomers = [], monthlyTrend = [] } = data || {};
+  const trendData = monthlyTrend.map((m) => ({ ...m, month: formatMonth(m.month) }));
+  const statusData = byStatus.map((item, idx) => ({
+    ...item,
+    color: CHART_COLORS[idx % CHART_COLORS.length],
+  }));
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="text-center">
+          <p className="text-text3 text-sm mb-1">Quotations</p>
+          <p className="font-heading text-2xl font-bold">{summary?.quotationCount || 0}</p>
+        </Card>
+        <Card className="text-center">
+          <p className="text-text3 text-sm mb-1">Total Value</p>
+          <p className="font-heading text-2xl font-bold text-accent2">{formatCurrency(summary?.totalValue || 0)}</p>
+        </Card>
+        <Card className="text-center">
+          <p className="text-text3 text-sm mb-1">Acceptance Rate</p>
+          <p className="font-heading text-2xl font-bold text-green">{summary?.acceptanceRate || 0}%</p>
+        </Card>
+        <Card className="text-center">
+          <p className="text-text3 text-sm mb-1">Conversion Rate</p>
+          <p className="font-heading text-2xl font-bold text-cyan">{summary?.conversionRate || 0}%</p>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <h3 className="font-heading text-base font-bold mb-4">Status Mix</h3>
+          {statusData.length > 0 ? (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={statusData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} dataKey="count" nameKey="status" paddingAngle={4}>
+                    {statusData.map((entry, idx) => (
+                      <Cell key={idx} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ background: '#1e2130', border: '1px solid #2a2d3e', borderRadius: '8px', color: '#f0f2ff', fontSize: '13px' }}
+                  />
+                  <Legend formatter={(value) => <span className="text-xs text-text3">{value}</span>} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <p className="text-text3 text-sm text-center py-12">No quotation data for selected period</p>
+          )}
+        </Card>
+
+        <Card>
+          <h3 className="font-heading text-base font-bold mb-4">Top Customers by Quotation Value</h3>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {topCustomers.length > 0 ? topCustomers.map((customer, idx) => (
+              <div key={customer.customerId} className="flex items-center justify-between p-3 bg-bg3 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-bold">{idx + 1}</span>
+                  <div>
+                    <p className="font-medium text-sm">{customer.customerName}</p>
+                    <p className="text-xs text-text3">{customer.quotationCount} quotation{customer.quotationCount !== 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+                <span className="font-bold text-accent2">{formatCurrency(customer.total)}</span>
+              </div>
+            )) : (
+              <p className="text-text3 text-sm text-center py-8">No customer data for selected period</p>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      <Card>
+        <h3 className="font-heading text-base font-bold mb-4">Monthly Quotation Value Trend</h3>
+        {trendData.length > 0 ? (
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3e" />
+                <XAxis dataKey="month" stroke="#606880" fontSize={12} />
+                <YAxis stroke="#606880" fontSize={12} tickFormatter={(v) => `₹${v / 1000}k`} />
+                <Tooltip
+                  contentStyle={{ background: '#1e2130', border: '1px solid #2a2d3e', borderRadius: '8px', color: '#f0f2ff', fontSize: '13px' }}
+                  formatter={(value) => [formatCurrency(value as number), 'Value']}
+                />
+                <Bar dataKey="total" fill="#06b6d4" radius={[6, 6, 0, 0]} name="Value" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <p className="text-text3 text-sm text-center py-8">No monthly data for selected period</p>
+        )}
+      </Card>
     </div>
   );
 }

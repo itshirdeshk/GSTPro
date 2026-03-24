@@ -57,6 +57,20 @@ export class ReportController {
       next(error);
     }
   }
+
+  async quotationReport(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const tenantId = getTenantId(req);
+      const { fromDate, toDate } = req.query as Record<string, string>;
+      if (!fromDate || !toDate) {
+        throw new BadRequestError('fromDate and toDate are required');
+      }
+      const report = await reportService.quotationReport(tenantId, fromDate, toDate);
+      sendSuccess(res, report);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const reportController = new ReportController();

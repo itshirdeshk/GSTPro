@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, FileText, Download, Trash2 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Plus, Search, Download, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -14,7 +15,7 @@ import { ComboBox } from '@/components/ui/combobox';
 import { apiGetPaginated, apiPost, apiPut, apiDelete } from '@/lib/api';
 import { formatCurrency, formatDate, GST_RATES } from '@/lib/utils';
 import { useCustomerSearch, useProductSearch } from '@/lib/hooks/use-search';
-import type { Invoice, Customer, Product, InvoiceItem } from '@/lib/types';
+import type { Invoice } from '@/lib/types';
 import toast from 'react-hot-toast';
 
 const statusOptions = [
@@ -26,13 +27,112 @@ const statusOptions = [
   { value: 'CANCELLED', label: 'Cancelled' },
 ];
 
+interface InvoiceFormItem {
+  productId: string;
+  description: string;
+  hsnCode: string;
+  quantity: number;
+  unitPrice: number;
+  gstRate: number;
+}
+
+interface InvoiceFormState {
+  customerId: string;
+  invoiceDate: string;
+  dueDate: string;
+  isReverseCharge: boolean;
+  discount: number;
+  terms: string;
+  notes: string;
+  templateId: number;
+  items: InvoiceFormItem[];
+}
+
+const QUOTATION_PREFILL_STORAGE_KEY = 'gstpro_invoice_prefill';
+
+function getInitialInvoiceForm(invoice: Invoice | null, draft?: Partial<InvoiceFormState> | null): InvoiceFormState {
+  const fallbackItem: InvoiceFormItem = {
+    productId: '',
+    description: '',
+    hsnCode: '',
+    quantity: 1,
+    unitPrice: 0,
+    gstRate: 18,
+  };
+
+  const base: InvoiceFormState = {
+    customerId: invoice?.customerId || '',
+    invoiceDate: invoice?.invoiceDate?.split('T')[0] || new Date().toISOString().split('T')[0],
+    dueDate: invoice?.dueDate?.split('T')[0] || '',
+    isReverseCharge: invoice?.isReverseCharge || false,
+    discount: invoice?.discount || 0,
+    terms: invoice?.terms || '',
+    notes: invoice?.notes || '',
+    templateId: invoice?.templateId || 1,
+    items: (invoice?.items?.length ? invoice.items : [fallbackItem]).map((item) => ({
+      productId: item.productId || '',
+      description: item.description || '',
+      hsnCode: item.hsnCode || '',
+      quantity: Number(item.quantity) || 1,
+      unitPrice: Number(item.unitPrice) || 0,
+      gstRate: Number(item.gstRate) || 18,
+    })),
+  };
+
+  if (!draft) {
+    return base;
+  }
+
+  return {
+    ...base,
+    ...draft,
+    items:
+      draft.items && draft.items.length
+        ? draft.items.map((item) => ({
+            productId: item.productId || '',
+            description: item.description || '',
+            hsnCode: item.hsnCode || '',
+            quantity: Number(item.quantity) || 1,
+            unitPrice: Number(item.unitPrice) || 0,
+            gstRate: Number(item.gstRate) || 18,
+          }))
+        : base.items,
+  };
+}
+
 export default function InvoicesPage() {
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [prefillDraft, setPrefillDraft] = useState<Partial<InvoiceFormState> | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get('prefill') !== 'quotation') {
+      return;
+    }
+
+    const raw = localStorage.getItem(QUOTATION_PREFILL_STORAGE_KEY);
+    if (!raw) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as Partial<InvoiceFormState>;
+      setEditingInvoice(null);
+      setPrefillDraft(parsed);
+      setModalOpen(true);
+      localStorage.removeItem(QUOTATION_PREFILL_STORAGE_KEY);
+      window.history.replaceState({}, '', '/invoices');
+      toast.success('Quotation loaded in invoice form');
+    } catch {
+      localStorage.removeItem(QUOTATION_PREFILL_STORAGE_KEY);
+      toast.error('Failed to load quotation data');
+    }
+  }, [searchParams]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['invoices', page, search, status],
@@ -43,6 +143,15 @@ export default function InvoicesPage() {
         search: search || undefined,
         status: status || undefined,
       }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiDelete(`/invoices/${id}`),
+    onSuccess: () => {
+      toast.success('Invoice deleted');
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    },
+    onError: () => toast.error('Failed to delete invoice'),
   });
 
   const columns = [
@@ -85,6 +194,37 @@ export default function InvoicesPage() {
       className: 'text-center',
       render: (inv: Invoice) => <StatusBadge status={inv.status} />,
     },
+    {
+      key: 'actions',
+      header: '',
+      className: 'text-right',
+      render: (inv: Invoice) => (
+        <div className="flex items-center justify-end gap-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditingInvoice(inv);
+              setPrefillDraft(null);
+              setModalOpen(true);
+            }}
+            className="px-2 py-1 text-xs text-accent2 hover:bg-accent/10 rounded transition-colors"
+          >
+            Edit
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (confirm('Delete this invoice?')) {
+                deleteMutation.mutate(inv.id);
+              }
+            }}
+            className="px-2 py-1 text-xs text-red hover:bg-red/10 rounded transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      ),
+    },
   ];
 
   return (
@@ -99,7 +239,15 @@ export default function InvoicesPage() {
           <Button variant="secondary" icon={<Download size={16} />} size="sm">
             Export CSV
           </Button>
-          <Button icon={<Plus size={16} />} size="sm" onClick={() => setModalOpen(true)}>
+          <Button
+            icon={<Plus size={16} />}
+            size="sm"
+            onClick={() => {
+              setEditingInvoice(null);
+              setPrefillDraft(null);
+              setModalOpen(true);
+            }}
+          >
             Create Invoice
           </Button>
         </div>
@@ -153,15 +301,18 @@ export default function InvoicesPage() {
         onClose={() => {
           setModalOpen(false);
           setEditingInvoice(null);
+          setPrefillDraft(null);
         }}
         title={editingInvoice ? 'Edit Invoice' : 'Create Invoice'}
         size="lg"
       >
         <InvoiceForm
           invoice={editingInvoice}
+          draft={prefillDraft}
           onSuccess={() => {
             setModalOpen(false);
             setEditingInvoice(null);
+            setPrefillDraft(null);
             queryClient.invalidateQueries({ queryKey: ['invoices'] });
           }}
         />
@@ -170,31 +321,24 @@ export default function InvoicesPage() {
   );
 }
 
-function InvoiceForm({ invoice, onSuccess }: { invoice: Invoice | null; onSuccess: () => void }) {
+function InvoiceForm({
+  invoice,
+  draft,
+  onSuccess,
+}: {
+  invoice: Invoice | null;
+  draft?: Partial<InvoiceFormState> | null;
+  onSuccess: () => void;
+}) {
   const queryClient = useQueryClient();
   const [customerSearch, setCustomerSearch] = useState('');
   const [productSearch, setProductSearch] = useState('');
-  const [form, setForm] = useState({
-    customerId: invoice?.customerId || '',
-    invoiceDate: invoice?.invoiceDate?.split('T')[0] || new Date().toISOString().split('T')[0],
-    dueDate: invoice?.dueDate?.split('T')[0] || '',
-    isReverseCharge: invoice?.isReverseCharge || false,
-    discount: invoice?.discount || 0,
-    terms: invoice?.terms || '',
-    notes: invoice?.notes || '',
-    templateId: invoice?.templateId || 1,
-    items: invoice?.items || [
-      {
-        productId: '',
-        description: '',
-        hsnCode: '',
-        quantity: 1,
-        unitPrice: 0,
-        gstRate: 18,
-      },
-    ],
-  });
+  const [form, setForm] = useState<InvoiceFormState>(() => getInitialInvoiceForm(invoice, draft));
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setForm(getInitialInvoiceForm(invoice, draft));
+  }, [invoice, draft]);
 
   // Fetch customers and products - will trigger on mount
   const customerOptions = useCustomerSearch(customerSearch);

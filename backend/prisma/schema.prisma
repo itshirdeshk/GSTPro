@@ -36,6 +36,15 @@ enum InvoiceStatus {
   CANCELLED
 }
 
+enum QuotationStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CONVERTED
+}
+
 enum PaymentMode {
   CASH
   UPI
@@ -93,6 +102,7 @@ model Tenant {
   customers           Customer[]
   products            Product[]
   invoices            Invoice[]
+  quotations          Quotation[]
   payments            Payment[]
   expenses            Expense[]
   auditLogs           AuditLog[]
@@ -169,6 +179,7 @@ model Customer {
   // Relations
   tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   invoices          Invoice[]
+  quotations        Quotation[]
 
   @@index([tenantId])
   @@index([tenantId, name])
@@ -198,6 +209,7 @@ model Product {
   // Relations
   tenant              Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   invoiceItems        InvoiceItem[]
+  quotationItems      QuotationItem[]
 
   @@index([tenantId])
   @@index([tenantId, name])
@@ -268,6 +280,65 @@ model InvoiceItem {
 
   @@index([invoiceId])
   @@map("invoice_items")
+}
+
+model Quotation {
+  id                String          @id @default(uuid()) @db.Uuid
+  tenantId          String          @map("tenant_id") @db.Uuid
+  customerId        String          @map("customer_id") @db.Uuid
+  quotationNumber   String          @map("quotation_number")
+  quotationDate     DateTime        @map("quotation_date") @db.Date
+  validUntil        DateTime        @map("valid_until") @db.Date
+  status            QuotationStatus @default(DRAFT)
+  subtotal          Decimal         @db.Decimal(14, 2)
+  cgst              Decimal         @default(0) @db.Decimal(14, 2)
+  sgst              Decimal         @default(0) @db.Decimal(14, 2)
+  igst              Decimal         @default(0) @db.Decimal(14, 2)
+  discount          Decimal         @default(0) @db.Decimal(14, 2)
+  totalAmount       Decimal         @map("total_amount") @db.Decimal(14, 2)
+  isInterState      Boolean         @default(false) @map("is_inter_state")
+  terms             String?
+  notes             String?
+  convertedInvoiceId String?        @map("converted_invoice_id") @db.Uuid
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  tenant            Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer          Customer        @relation(fields: [customerId], references: [id])
+  items             QuotationItem[]
+
+  @@unique([tenantId, quotationNumber])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, customerId])
+  @@index([tenantId, quotationDate])
+  @@index([tenantId, createdAt])
+  @@map("quotations")
+}
+
+model QuotationItem {
+  id            String    @id @default(uuid()) @db.Uuid
+  quotationId   String    @map("quotation_id") @db.Uuid
+  productId     String?   @map("product_id") @db.Uuid
+  description   String
+  hsnCode       String?   @map("hsn_code") @db.VarChar(8)
+  quantity      Decimal   @db.Decimal(10, 2)
+  unitPrice     Decimal   @map("unit_price") @db.Decimal(12, 2)
+  gstRate       Decimal   @map("gst_rate") @db.Decimal(5, 2)
+  taxableAmount Decimal   @map("taxable_amount") @db.Decimal(14, 2)
+  cgst          Decimal   @default(0) @db.Decimal(14, 2)
+  sgst          Decimal   @default(0) @db.Decimal(14, 2)
+  igst          Decimal   @default(0) @db.Decimal(14, 2)
+  totalAmount   Decimal   @map("total_amount") @db.Decimal(14, 2)
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  quotation     Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  product       Product?  @relation(fields: [productId], references: [id])
+
+  @@index([quotationId])
+  @@map("quotation_items")
 }
 
 model Payment {

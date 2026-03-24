@@ -8,7 +8,7 @@ export function validate(schema: ZodSchema, source: 'body' | 'query' | 'params' 
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
       const data = schema.parse(req[source]);
-      req[source] = data;
+      Object.assign(req[source], data);
       next();
     } catch (error: any) {
       if (error?.issues || error?.name === 'ZodError') {
