@@ -9,6 +9,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: "postgresql://postgres:ZTjmzFttRpufMBomQydNbDDLHbmWqtwQ@postgres.railway.internal:5432/railway",
+    url: process.env["DATABASE_URL"],
   },
 });
