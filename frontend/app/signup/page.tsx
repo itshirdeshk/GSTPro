@@ -63,9 +63,9 @@ export default function SignupPage() {
       <div className="w-full max-w-110 bg-bg2 rounded-2xl p-10 border border-border animate-slide-up relative">
         <div className="flex items-center justify-center gap-2.5 mb-8">
           <div className="w-10 h-10 rounded-xl bg-linear-to-br from-accent to-cyan flex items-center justify-center text-white font-bold text-lg">
-            G
+            S
           </div>
-          <span className="font-heading text-2xl font-bold">GSTPro</span>
+          <span className="font-heading text-2xl font-bold">Sales Suite</span>
         </div>
 
         <h1 className="font-heading text-2xl font-bold text-center mb-2">Create account</h1>

@@ -26,6 +26,7 @@ const navSections = [
     label: 'Main',
     items: [
       { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+      { href: '/analytics', icon: BarChart3, label: 'Analytics' },
       { href: '/invoices', icon: FileText, label: 'Invoices' },
       { href: '/quotations', icon: ScrollText, label: 'Quotations' },
       { href: '/customers', icon: Users, label: 'Customers' },
@@ -38,7 +39,6 @@ const navSections = [
       { href: '/payments', icon: CreditCard, label: 'Payments' },
       { href: '/expenses', icon: Receipt, label: 'Expenses' },
       { href: '/calculator', icon: Calculator, label: 'Calculator' },
-      { href: '/reports', icon: BarChart3, label: 'Reports' },
     ],
   },
   {
@@ -79,14 +79,14 @@ export function Sidebar() {
           {!sidebarCollapsed && (
             <Link href="/dashboard" className="flex items-center gap-2.5" onClick={closeMobileSidebar}>
               <div className="w-8 h-8 rounded-lg bg-linear-to-br from-accent to-cyan flex items-center justify-center text-white font-bold text-sm">
-                G
+                S
               </div>
-              <span className="font-heading text-lg font-bold">GSTPro</span>
+              <span className="font-heading text-lg font-bold">Sales Suite</span>
             </Link>
           )}
           {sidebarCollapsed && (
             <div className="w-8 h-8 rounded-lg bg-linear-to-br from-accent to-cyan flex items-center justify-center text-white font-bold text-sm mx-auto">
-              G
+              S
             </div>
           )}
           <button

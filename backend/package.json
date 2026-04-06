@@ -1,7 +1,7 @@
 {
   "name": "gstpro-backend",
   "version": "1.0.0",
-  "description": "GSTPro Multi-Tenant GST Billing SaaS - Backend API",
+  "description": "Sales Suite Multi-Tenant Analytics SaaS - Backend API",
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/server.ts",
@@ -25,6 +25,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@prisma/adapter-pg": "^7.4.1",
     "@prisma/client": "^7.4.1",
     "bcryptjs": "^3.0.3",

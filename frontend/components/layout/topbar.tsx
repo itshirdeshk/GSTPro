@@ -21,7 +21,7 @@ export function Topbar() {
   const pathname = usePathname();
   const { sidebarCollapsed, toggleMobileSidebar } = useUIStore();
 
-  const title = pageTitles[pathname] || 'GSTPro';
+  const title = pageTitles[pathname] || 'Sales Suite';
 
   return (
     <header

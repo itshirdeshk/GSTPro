@@ -18,6 +18,7 @@ import quotationRoutes from './modules/quotation/quotation.routes';
 import paymentRoutes from './modules/payment/payment.routes';
 import expenseRoutes from './modules/expense/expense.routes';
 import reportRoutes from './modules/report/report.routes';
+import aiRoutes from './modules/ai/ai.routes';
 import healthRoutes from './modules/health/health.routes';
 
 const app = express();
@@ -73,6 +74,7 @@ app.use('/api/quotations', quotationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Error handling
 app.use(notFoundHandler);

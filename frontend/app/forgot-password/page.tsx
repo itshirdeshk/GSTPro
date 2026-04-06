@@ -34,9 +34,9 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-[440px] bg-bg2 rounded-2xl p-10 border border-border animate-slide-up">
         <div className="flex items-center justify-center gap-2.5 mb-8">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-cyan flex items-center justify-center text-white font-bold text-lg">
-            G
+            S
           </div>
-          <span className="font-heading text-2xl font-bold">GSTPro</span>
+          <span className="font-heading text-2xl font-bold">Sales Suite</span>
         </div>
 
         {sent ? (

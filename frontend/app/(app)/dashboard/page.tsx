@@ -106,14 +106,14 @@ export default function DashboardPage() {
   const isLoading = salesLoading || gstLoading || invoicesLoading;
 
   // Calculate stats from fetched data
-  const totalRevenue = salesData?.summary?.totalRevenue || mockStats.totalRevenue;
+  const totalRevenue = salesData?.summary?.totalRevenue || 0;
   const gstCollected =
-    (gstData?.summary?.cgst || 0) + 
-    (gstData?.summary?.sgst || 0) + 
+    (gstData?.summary?.cgst || 0) +
+    (gstData?.summary?.sgst || 0) +
     (gstData?.summary?.igst || 0) ||
-    mockStats.gstCollected;
+    0;
   const pendingPayments = salesData?.summary?.totalOutstanding || 0;
-  const totalExpenses = expensesData?.totalExpenses || mockStats.totalExpenses;
+  const totalExpenses = expensesData?.totalExpenses || 0;
   const quotationCount = quotationData?.summary?.quotationCount || 0;
 
   // Process monthly trend data - format: "2026-02" to "Feb"
@@ -126,10 +126,10 @@ export default function DashboardPage() {
   // GST breakdown
   const gstBreakdownData = gstData?.summary
     ? [
-        { name: 'CGST', value: gstData.summary.cgst || 0, color: '#6c63ff' },
-        { name: 'SGST', value: gstData.summary.sgst || 0, color: '#8b84ff' },
-        { name: 'IGST', value: gstData.summary.igst || 0, color: '#06b6d4' },
-      ]
+      { name: 'CGST', value: gstData.summary.cgst || 0, color: '#6c63ff' },
+      { name: 'SGST', value: gstData.summary.sgst || 0, color: '#8b84ff' },
+      { name: 'IGST', value: gstData.summary.igst || 0, color: '#06b6d4' },
+    ]
     : gstBreakdown;
 
   const recentInvoices = invoicesData || [];
@@ -212,13 +212,15 @@ export default function DashboardPage() {
                 <YAxis stroke="#606880" fontSize={12} tickFormatter={(v) => `₹${v / 1000}k`} />
                 <Tooltip
                   contentStyle={{
-                    background: '#1e2130',
-                    border: '1px solid #2a2d3e',
-                    borderRadius: '8px',
-                    color: '#f0f2ff',
-                    fontSize: '13px',
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: 'var(--text)',
+                    fontSize: '12px',
+                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                   }}
-                  formatter={(value) => [formatCurrency(value as number), 'Revenue']}
+                  itemStyle={{ color: 'var(--text2)' }}
+                  formatter={(value) => [formatCurrency(Number(value || 0)), 'Revenue']}
                 />
                 <Area
                   type="monotone"
@@ -253,13 +255,15 @@ export default function DashboardPage() {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    background: '#1e2130',
-                    border: '1px solid #2a2d3e',
-                    borderRadius: '8px',
-                    color: '#f0f2ff',
-                    fontSize: '13px',
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: 'var(--text)',
+                    fontSize: '12px',
+                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                   }}
-                  formatter={(value) => formatCurrency(value as number)}
+                  itemStyle={{ color: 'var(--text2)' }}
+                  formatter={(value) => formatCurrency(Number(value || 0))}
                 />
               </PieChart>
             </ResponsiveContainer>

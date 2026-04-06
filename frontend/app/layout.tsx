@@ -16,8 +16,8 @@ const syne = Syne({
 });
 
 export const metadata: Metadata = {
-  title: 'GSTPro – GST Billing & Invoicing',
-  description: 'Multi-tenant GST billing and invoicing SaaS for Indian businesses',
+  title: 'Sales Suite – E-commerce & Restaurant Analytics',
+  description: 'Multi-tenant analytics and reconciliation SaaS for modern businesses',
 };
 
 export default function RootLayout({

@@ -30,6 +30,9 @@ export const env = {
   SMTP_PASS: process.env.SMTP_PASS || '',
   EMAIL_FROM: process.env.EMAIL_FROM || 'noreply@gstpro.in',
 
+  // AI
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+
   isDev: process.env.NODE_ENV === 'development',
   isProd: process.env.NODE_ENV === 'production',
 } as const;
