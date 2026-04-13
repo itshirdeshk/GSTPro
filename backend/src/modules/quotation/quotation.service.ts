@@ -4,6 +4,7 @@ import { BadRequestError, NotFoundError } from '../../utils/errors';
 import { calculateGST, isInterStateTransaction, roundTo2 } from '../../utils/gst';
 import { CreateQuotationInput, UpdateQuotationInput } from './quotation.validators';
 import { invoiceService } from '../invoice/invoice.service';
+import { escapeHtml } from '../../utils';
 
 function formatDate(date: Date | string) {
   return new Date(date).toLocaleDateString('en-IN');
@@ -442,8 +443,8 @@ export class QuotationService {
         (item, index) => `
           <tr>
             <td>${index + 1}</td>
-            <td>${item.description}</td>
-            <td>${item.hsnCode || '-'}</td>
+            <td>${escapeHtml(item.description)}</td>
+            <td>${escapeHtml(item.hsnCode || '-')}</td>
             <td style="text-align:right;">${Number(item.quantity).toFixed(2)}</td>
             <td style="text-align:right;">${Number(item.unitPrice).toFixed(2)}</td>
             <td style="text-align:right;">${Number(item.gstRate).toFixed(2)}%</td>
@@ -457,7 +458,7 @@ export class QuotationService {
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>${quotation.quotationNumber}</title>
+  <title>${escapeHtml(quotation.quotationNumber)}</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; color: #111827; }
     .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 16px; }
@@ -481,25 +482,25 @@ export class QuotationService {
     <div>
       <h1 class="title">Quotation</h1>
       <div class="meta">
-        <div><strong>No:</strong> ${quotation.quotationNumber}</div>
-        <div><strong>Date:</strong> ${formatDate(quotation.quotationDate)}</div>
-        <div><strong>Valid Till:</strong> ${formatDate(quotation.validUntil)}</div>
-        <div><strong>Status:</strong> ${quotation.status}</div>
+        <div><strong>No:</strong> ${escapeHtml(quotation.quotationNumber)}</div>
+        <div><strong>Date:</strong> ${escapeHtml(formatDate(quotation.quotationDate))}</div>
+        <div><strong>Valid Till:</strong> ${escapeHtml(formatDate(quotation.validUntil))}</div>
+        <div><strong>Status:</strong> ${escapeHtml(quotation.status)}</div>
       </div>
     </div>
     <div class="party">
-      <div><strong>${quotation.tenant.businessName}</strong></div>
-      <div>${quotation.tenant.address || ''}</div>
-      <div>${quotation.tenant.city || ''} ${quotation.tenant.state || ''}</div>
-      <div>GSTIN: ${quotation.tenant.gstin || '-'}</div>
+      <div><strong>${escapeHtml(quotation.tenant.businessName)}</strong></div>
+      <div>${escapeHtml(quotation.tenant.address || '')}</div>
+      <div>${escapeHtml(quotation.tenant.city || '')} ${escapeHtml(quotation.tenant.state || '')}</div>
+      <div>GSTIN: ${escapeHtml(quotation.tenant.gstin || '-')}</div>
     </div>
   </div>
 
   <div class="party">
-    <div><strong>Bill To:</strong> ${quotation.customer.name}</div>
-    <div>${quotation.customer.address || ''}</div>
-    <div>${quotation.customer.city || ''} ${quotation.customer.state || ''}</div>
-    <div>GSTIN: ${quotation.customer.gstin || '-'}</div>
+    <div><strong>Bill To:</strong> ${escapeHtml(quotation.customer.name)}</div>
+    <div>${escapeHtml(quotation.customer.address || '')}</div>
+    <div>${escapeHtml(quotation.customer.city || '')} ${escapeHtml(quotation.customer.state || '')}</div>
+    <div>GSTIN: ${escapeHtml(quotation.customer.gstin || '-')}</div>
   </div>
 
   <table>
@@ -529,8 +530,8 @@ export class QuotationService {
   </div>
 
   <div class="footer">
-    <div><strong>Terms:</strong> ${quotation.terms || '-'}</div>
-    <div><strong>Notes:</strong> ${quotation.notes || '-'}</div>
+    <div><strong>Terms:</strong> ${escapeHtml(quotation.terms || '-')}</div>
+    <div><strong>Notes:</strong> ${escapeHtml(quotation.notes || '-')}</div>
   </div>
 </body>
 </html>`;
